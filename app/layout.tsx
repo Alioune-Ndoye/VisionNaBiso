@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: "VideoNaBiso",
   description: "Video calling App",
   icons: {
-    icon: "/icons/logo.svg",
+    icon: "/icons/yoom-logo.svg",
   },
 };
 
@@ -26,7 +26,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           appearance={{
             layout: {
               socialButtonsVariant: "iconButton",
-              logoImageUrl: "/icons/yoom-logo.svg",
+              logoImageUrl: "/icons/logo.svg",
             },
             variables: {
               colorText: "#fff",
