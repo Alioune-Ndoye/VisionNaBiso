@@ -1,9 +1,12 @@
 "use client";
 
 import Image from "next/image";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
+import { AlertDialog } from "./ui/alert-dialog";
 import { avatarImages } from "@/constants";
 import { useToast } from "./ui/use-toast";
 
@@ -16,6 +19,8 @@ interface MeetingCardProps {
   buttonText?: string;
   handleClick: () => void;
   link: string;
+  onDelete?: () => Promise<void>;
+  meetingType?: 'upcoming' | 'ended' | 'recordings';
 }
 
 const MeetingCard = ({
@@ -27,11 +32,54 @@ const MeetingCard = ({
   handleClick,
   link,
   buttonText,
+  onDelete,
+  meetingType,
 }: MeetingCardProps) => {
   const { toast } = useToast();
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const confirmDescription =
+    meetingType === 'upcoming'
+      ? 'Are you sure you want to cancel this meeting? This cannot be undone.'
+      : meetingType === 'ended'
+        ? 'Are you sure you want to delete this meeting record? This cannot be undone.'
+        : 'Are you sure you want to delete this recording? This cannot be undone.';
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    setIsDeleting(true);
+    try {
+      await onDelete();
+      setShowConfirm(false);
+    } catch (err) {
+      toast({
+        title: err instanceof Error ? err.message : 'Failed to delete. Please try again.',
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
-    <section className="flex min-h-[258px] w-full flex-col justify-between rounded-[14px] bg-dark-1 px-5 py-8 xl:max-w-[568px]">
+    <section className="group relative flex min-h-[258px] w-full flex-col justify-between rounded-[14px] bg-dark-1 px-5 py-8 xl:max-w-[568px]">
+      {onDelete && (
+        <button
+          onClick={() => setShowConfirm(true)}
+          aria-label="Delete recording"
+          className="absolute right-3 top-3 rounded-md p-1.5 text-slate-400 opacity-0 transition-opacity hover:bg-dark-3 hover:text-red-400 group-hover:opacity-100"
+        >
+          <Trash2 className="size-4" />
+        </button>
+      )}
+      <AlertDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title={meetingType === 'upcoming' ? 'Cancel Meeting' : 'Delete Meeting'}
+        description={confirmDescription}
+        onConfirm={handleDelete}
+        isLoading={isDeleting}
+      />
       <article className="flex flex-col gap-5">
         <Image src={icon} alt="upcoming" width={28} height={28} />
         <div className="flex justify-between">

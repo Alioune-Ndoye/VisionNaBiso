@@ -9,7 +9,7 @@ import {
   SpeakerLayout,
   useCallStateHooks,
 } from '@stream-io/video-react-sdk';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Users, LayoutList } from 'lucide-react';
 
 import {
@@ -21,19 +21,24 @@ import {
 } from './ui/dropdown-menu';
 import Loader from './Loader';
 import EndCallButton from './EndCallButton';
+import { Switch } from './ui/switch';
 import { cn } from '@/lib/utils';
 
 type CallLayoutType = 'grid' | 'speaker-left' | 'speaker-right';
 
-const MeetingRoom = () => {
+interface MeetingRoomProps {
+  aiEnabled?: boolean;
+  onAiToggle?: (enabled: boolean) => void;
+  onLeave?: () => void;
+}
+
+const MeetingRoom = ({ aiEnabled, onAiToggle, onLeave }: MeetingRoomProps = {}) => {
   const searchParams = useSearchParams();
   const isPersonalRoom = !!searchParams.get('personal');
-  const router = useRouter();
   const [layout, setLayout] = useState<CallLayoutType>('speaker-left');
   const [showParticipants, setShowParticipants] = useState(false);
   const { useCallCallingState } = useCallStateHooks();
 
-  // for more detail about types of CallingState see: https://getstream.io/video/docs/react/ui-cookbook/ringing-call/#incoming-call-panel
   const callingState = useCallCallingState();
 
   if (callingState !== CallingState.JOINED) return <Loader />;
@@ -63,9 +68,10 @@ const MeetingRoom = () => {
           <CallParticipantsList onClose={() => setShowParticipants(false)} />
         </div>
       </div>
+
       {/* video layout and call controls */}
-      <div className="fixed bottom-0 flex w-full items-center justify-center gap-5">
-        <CallControls onLeave={() => router.push(`/`)} />
+      <div className="fixed bottom-0 flex w-full items-center justify-center gap-5 flex-wrap pb-2">
+        <CallControls onLeave={onLeave} />
 
         <DropdownMenu>
           <div className="flex items-center">
@@ -88,12 +94,23 @@ const MeetingRoom = () => {
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
+
         <CallStatsButton />
+
         <button onClick={() => setShowParticipants((prev) => !prev)}>
           <div className=" cursor-pointer rounded-2xl bg-[#19232d] px-4 py-2 hover:bg-[#4c535b]  ">
             <Users size={20} className="text-white" />
           </div>
         </button>
+
+        {/* AI Assistant toggle */}
+        {onAiToggle !== undefined && (
+          <div className="flex items-center gap-2 rounded-2xl bg-[#19232d] px-4 py-2">
+            <span className="text-sm text-white select-none">AI Assistant</span>
+            <Switch checked={aiEnabled ?? false} onCheckedChange={onAiToggle} />
+          </div>
+        )}
+
         {!isPersonalRoom && <EndCallButton />}
       </div>
     </section>
