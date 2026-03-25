@@ -127,7 +127,7 @@ function buildEmailHtml(
 }
 
 export async function POST(req: NextRequest) {
-  const { participants, callId, analysis, questions, meetingDate } = await req.json();
+  const { participants, analysis, questions, meetingDate } = await req.json();
 
   if (!process.env.RESEND_API_KEY) {
     console.warn('[email] RESEND_API_KEY is not set — skipping email sends');
