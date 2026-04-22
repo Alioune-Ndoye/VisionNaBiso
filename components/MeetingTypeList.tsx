@@ -13,6 +13,7 @@ import { Textarea } from './ui/textarea';
 import ReactDatePicker from 'react-datepicker';
 import { useToast } from './ui/use-toast';
 import { Input } from './ui/input';
+import Image from 'next/image';
 
 const initialValues = {
   dateTime: new Date(),
@@ -27,6 +28,7 @@ const MeetingTypeList = () => {
   >(undefined);
   const [values, setValues] = useState(initialValues);
   const [callDetail, setCallDetail] = useState<Call>();
+  const [copied, setCopied] = useState(false);
   const client = useStreamVideoClient();
   const { user } = useUser();
   const { toast } = useToast();
@@ -53,12 +55,7 @@ const MeetingTypeList = () => {
         },
       });
       setCallDetail(call);
-      if (!values.description) {
-        router.push(`/meeting/${call.id}`);
-      }
-      toast({
-        title: 'Meeting Created',
-      });
+      toast({ title: 'Meeting Created' });
     } catch (error) {
       console.error(error);
       toast({ title: 'Failed to create Meeting' });
@@ -164,14 +161,53 @@ const MeetingTypeList = () => {
         />
       </MeetingModal>
 
-      <MeetingModal
-        isOpen={meetingState === 'isInstantMeeting'}
-        onClose={() => setMeetingState(undefined)}
-        title="Start an Instant Meeting"
-        className="text-center"
-        buttonText="Start Meeting"
-        handleClick={createMeeting}
-      />
+      {meetingState === 'isInstantMeeting' && !callDetail && (
+        <MeetingModal
+          isOpen
+          onClose={() => setMeetingState(undefined)}
+          title="Start an Instant Meeting"
+          className="text-center"
+          buttonText="Start Meeting"
+          handleClick={createMeeting}
+        />
+      )}
+
+      {meetingState === 'isInstantMeeting' && callDetail && (
+        <MeetingModal
+          isOpen
+          onClose={() => { setMeetingState(undefined); setCallDetail(undefined); }}
+          title="Meeting Ready!"
+          className="text-center"
+          image="/icons/checked.svg"
+          buttonText="Start Meeting"
+          handleClick={() => router.push(`/meeting/${callDetail.id}`)}
+        >
+          <div className="flex flex-col gap-3">
+            <p className="text-sm text-sky-2">Share this link with participants:</p>
+            <div className="flex items-center gap-2">
+              <Input
+                value={meetingLink}
+                readOnly
+                className="border-none bg-dark-3 text-sm focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(meetingLink);
+                  setCopied(true);
+                  toast({ title: 'Link Copied!' });
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="shrink-0 rounded-md bg-dark-3 px-3 py-2 text-sm font-medium text-white hover:bg-dark-4 transition-colors"
+              >
+                {copied ? 'Copied!' : (
+                  <Image src="/icons/copy.svg" alt="copy" width={16} height={16} />
+                )}
+              </button>
+            </div>
+          </div>
+        </MeetingModal>
+      )}
     </section>
   );
 };
